@@ -28,15 +28,10 @@ namespace ArxBuh2.TabPages
                 _grid = CreateGrid();
                 _collection = new SelectableFilterCollection<InOut>(_grid, Database.GetMany<InOut>());
                 _grid.DataStore = _collection;
-
+                
                 return _grid;
             }
         }        
-
-        public TabAccounting()
-        {
-
-        }
 
         public DynamicLayout Layout1
         {
@@ -51,94 +46,224 @@ namespace ArxBuh2.TabPages
                 return layout;
             }
         }
+        class MyCustomCell : CustomCell
+        {
+            protected override void OnConfigureCell(CellEventArgs args, Control control)
+            {
+                var item = (InOut)args.Item;
+                var label = (Label)control;
 
+                var col = item.TypeOperation == "Доход" ? Colors.LightGreen : Colors.LightPink;
+
+                if (args.CellState.HasFlag(CellStates.Selected)) col = SystemColors.Highlight;
+
+                label.BackgroundColor = col;
+
+                label.TextColor = args.CellState.HasFlag(CellStates.Selected) ? Colors.White : Colors.Black;
+
+                base.OnConfigureCell(args, control);
+            }
+        }
+
+        class MyCustomCellComment : MyCustomCell
+        {
+            protected override Control OnCreateCell(CellEventArgs args)
+            {
+                var controlLabel = new Label();
+                controlLabel.TextBinding.BindDataContext((InOut m) => m.Comment);
+
+                return controlLabel;
+            }
+
+            protected override void OnPaint(CellPaintEventArgs args)
+            {
+                var item = (InOut)args.Item;
+                if (!args.IsEditing)
+                    args.Graphics.DrawText(SystemFonts.Default(), Colors.Black, args.ClipRectangle.Location, item.Comment);
+            }
+        }
+
+        class MyCustomCellType : MyCustomCell
+        {
+            protected override Control OnCreateCell(CellEventArgs args)
+            {
+                var controlLabel = new Label();
+                controlLabel.TextBinding.BindDataContext((InOut m) => m.TypeOperation);
+
+                return controlLabel;
+            }
+            protected override void OnPaint(CellPaintEventArgs args)
+            {
+                var item = (InOut)args.Item;
+                if (!args.IsEditing)
+                    args.Graphics.DrawText(SystemFonts.Default(), Colors.Black, args.ClipRectangle.Location, item.TypeOperation);
+            }
+        }
+
+        class MyCustomCellCategory : MyCustomCell
+        {
+            protected override Control OnCreateCell(CellEventArgs args)
+            {
+                var controlLabel = new Label();
+                controlLabel.TextBinding.BindDataContext((InOut m) => m.Category);
+
+                return controlLabel;
+            }
+
+            protected override void OnPaint(CellPaintEventArgs args)
+            {
+                var item = (InOut)args.Item;
+                if (!args.IsEditing)
+                    args.Graphics.DrawText(SystemFonts.Default(), Colors.Black, args.ClipRectangle.Location, item.Category);
+            }
+        }
+
+        class MyCustomCellCreatedAt : MyCustomCell
+        {
+            protected override Control OnCreateCell(CellEventArgs args)
+            {
+                var controlLabel = new Label();
+                controlLabel.TextBinding.BindDataContext((InOut m) => (m.CreatedAt.Value.ToShortDateString()));
+
+                return controlLabel;
+            }
+
+            protected override void OnPaint(CellPaintEventArgs args)
+            {
+                var item = (InOut)args.Item;
+                if (!args.IsEditing)
+                    args.Graphics.DrawText(SystemFonts.Default(), Colors.Black, args.ClipRectangle.Location, item.CreatedAt.Value.ToShortDateString());
+            }
+        }
+
+        class MyCustomCellSum : MyCustomCell
+        {
+            protected override Control OnCreateCell(CellEventArgs args)
+            {
+                var controlLabel = new Label();
+                controlLabel.TextBinding.BindDataContext((InOut m) => (m.Sum.ToString()));
+
+                return controlLabel;
+            }
+
+            protected override void OnPaint(CellPaintEventArgs args)
+            {
+                var item = (InOut)args.Item;
+                if (!args.IsEditing)
+                    args.Graphics.DrawText(SystemFonts.Default(), Colors.Black, args.ClipRectangle.Location, item.Sum.ToString());
+            }
+        }
 
         GridView CreateGrid()
         {
+
             var grid = new GridView();
             grid.ID = "mainGrid";
             grid.GridLines = GridLines.Both;
 
+            Cell cellType = null;
+            Cell cellCategory = null;
+            Cell cellCreatedAt = null;
+            Cell cellSum = null;
+            Cell cellComment = null;        
+
+            if (Platform.Supports<CustomCell>())
+            {
+                cellType = new MyCustomCellType();
+                cellCategory = new MyCustomCellCategory();
+                cellCreatedAt = new MyCustomCellCreatedAt();
+                cellSum = new MyCustomCellSum();
+                cellComment = new MyCustomCellComment();
+            }
+            else
+            {
+                cellType = new TextBoxCell { Binding = Binding.Property<InOut, string>(r => r.TypeOperation) };
+
+                cellCategory = new TextBoxCell { Binding = Binding.Property<InOut, string>(r => r.Category) };
+
+                cellCreatedAt = new TextBoxCell()
+                {
+                    Binding = Binding.Property((InOut m) => m.CreatedAt).Convert(r => ((DateTime)r).ToString("dd.MM.yyyy"), v => (DateTime)Enum.Parse(typeof(InOut), v))
+                };
+
+                cellSum = new TextBoxCell()
+                {
+                    Binding = Binding.Property((InOut m) => m.Sum).Convert(r => r.ToString(), v => (int)Enum.Parse(typeof(InOut), v))
+                };
+
+                cellComment = new TextBoxCell { Binding = Binding.Property<InOut, string>(r => r.Comment) };
+            }
+
             var colType = new GridColumn
             {
-                DataCell = new TextBoxCell { Binding = Binding.Property<InOut, string>(r => r.TypeOperation) },
+                DataCell = cellType,
                 HeaderText = "Type",
+                Sortable = true,
                 AutoSize = false,
                 Width = 80,
-                Sortable = true,
+
             };
 
             var colCategory = new GridColumn
             {
-                DataCell = new TextBoxCell { Binding = Binding.Property<InOut, string>(r => r.Category) },
-                HeaderText = "Category",
+                DataCell = cellCategory,
+                HeaderText = "Type",
+                Sortable = true,
                 AutoSize = false,
                 Width = 80,
-                Sortable = true
             };
 
             var colCreatedAt = new GridColumn
             {
-                DataCell = new TextBoxCell()
-                {
-                    Binding = Binding.Property((InOut m) => m.CreatedAt).Convert(r => ((DateTime)r).ToString("dd.MM.yyyy"), v => (DateTime)Enum.Parse(typeof(InOut), v))
-                },
-                HeaderText = "CreatedAt",
+                DataCell = cellCreatedAt,
+                HeaderText = "Type",
+                Sortable = true,
                 AutoSize = false,
                 Width = 80,
-                Sortable = true
 
             };
 
             var colSum = new GridColumn
             {
-                DataCell = new TextBoxCell()
-                {
-                    Binding = Binding.Property((InOut m) => m.Sum).Convert(r => r.ToString(), v => (int)Enum.Parse(typeof(InOut), v))
-                },
-                Width = 50,
+                DataCell = cellSum,
+                HeaderText = "Type",
+                Sortable = true,
                 AutoSize = false,
-                HeaderText = "Sum",
-                Sortable = true
-
+                Width = 80,
             };
-
+            
             var colComment = new GridColumn
             {
-                DataCell = new TextBoxCell { Binding = Binding.Property<InOut, string>(r => r.Comment) },
+                DataCell = cellComment,
                 AutoSize = false,
                 HeaderText = "Comment",
-                Width = 205,
+                Width = 185,
                 Sortable = true
-
             };
 
-            grid.CellFormatting += (sender, e) =>
-            {
-                var item = (InOut)e.Item;
+             grid.CellFormatting += (sender, e) =>
+             {
+                 var item = (InOut)e.Item;
 
-                if (item != null)
-                {
-
-                    e.BackgroundColor = item.TypeOperation == "Доход" ? Colors.LightGreen : Colors.LightPink;
-
-                    e.Column.Sortable = true;
-                }
-
-
-            };
+                 if (item != null)
+                 {                
+                     e.BackgroundColor = item.TypeOperation == "Доход" ? Colors.LightGreen : Colors.LightPink;
+                     e.Column.Sortable = true;
+                 }
+             };
 
             grid.Columns.Add(colType);
+            
             grid.Columns.Add(colCategory);
             grid.Columns.Add(colCreatedAt);
             grid.Columns.Add(colSum);
-            grid.Columns.Add(colComment);
 
+            grid.Columns.Add(colComment);
 
             grid.SizeChanged += (sender, e) =>
             {
                 var x = grid.Columns.First(p => p.HeaderText == "Comment");
-                x.Width = grid.Width - 295;
+                x.Width = grid.Width - 322;
             };
 
             grid.ColumnHeaderClick += (sender, e) =>
@@ -190,6 +315,7 @@ namespace ArxBuh2.TabPages
 
             gridContextMenu = new ContextMenu();
 
+            gridContextMenu.Items.Add(new ButtonMenuItem { Text = "Редактировать" });
             gridContextMenu.Items.Add(new ButtonMenuItem { Text = "Удалить" });
 
             return gridContextMenu;
@@ -226,8 +352,8 @@ namespace ArxBuh2.TabPages
 
                 Items =
                 {
-                    new Button { Text = "Доход" },
-                            new Button { Text = "Расход" },
+                    new Button { Text = "Доход", Command = addEdit("Доход") },
+                            new Button { Text = "Расход", Command = addEdit("Расход") },
                             filterComboBox,
                             new Label { Text = "С" },
                             pickerDown,
@@ -246,6 +372,24 @@ namespace ArxBuh2.TabPages
             };
 
             return panel;
+        }
+
+        private Command addEdit(string title)
+        {
+            Command add = new Command();
+
+            add.Executed += (sender, e) =>
+            {
+                _Forms.AddEditInOut panel = new _Forms.AddEditInOut(title);
+                
+                if (panel.ShowModal())
+                {
+                    Database.Create<InOut>(panel.NewItem);
+                    _collection.Add(panel.NewItem);
+                }
+            };
+
+            return add;
         }
 
         private void filter(object sender, EventArgs e, DateTime down, DateTime up, string substring)

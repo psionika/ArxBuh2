@@ -7,11 +7,11 @@ namespace ArxBuh2.Data
 {
     public class Database
     {
-        private const string _dbName = "arxBuh2.db";
+        private const string DbName = "arxBuh2.db";
 
         public static IEnumerable<T> GetMany<T>()
         {
-            using (var odb = OdbFactory.Open(_dbName))
+            using (var odb = OdbFactory.Open(DbName))
             {
                 return odb.AsQueryable<T>().ToList();
             }
@@ -19,7 +19,7 @@ namespace ArxBuh2.Data
 
         public static void Create<T>(T item) where T : class, IBaseEntity
         {
-            using (var odb = OdbFactory.Open(_dbName))
+            using (var odb = OdbFactory.Open(DbName))
             {
                 odb.Store(item);
                 odb.Commit();
@@ -28,7 +28,7 @@ namespace ArxBuh2.Data
 
         public static void DeleteItem<T>(T item) where T : class, IBaseEntity
         {
-            using (var odb = OdbFactory.Open(_dbName))
+            using (var odb = OdbFactory.Open(DbName))
             {
                 var oid = OIDFactory.BuildObjectOID(item.ObjectId);
 

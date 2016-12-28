@@ -7,7 +7,7 @@ namespace ArxBuh2.Data.Entity
         long ObjectId { get; }
     }
 
-    public class baseClass : OID, IBaseEntity
+    public class BaseClass : OID, IBaseEntity
     {
         [OID]
         private readonly long _oid;
@@ -24,7 +24,7 @@ namespace ArxBuh2.Data.Entity
 
         public int CompareTo(OID oid)
         {
-            if (!(oid is baseClass))
+            if (!(oid is BaseClass))
                 return -1000;
 
             var otherOid = oid;

@@ -2,7 +2,7 @@
 
 namespace ArxBuh2.Data.Entity
 {
-    public class InOut : baseClass
+    public class InOut : BaseClass
     {
         public InOut()
         {

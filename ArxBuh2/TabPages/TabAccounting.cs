@@ -1,25 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 
-using Eto;
 using Eto.Forms;
 using Eto.Drawing;
-
 
 using ArxBuh2.Data;
 using ArxBuh2.Data.Entity;
 
-using ArxBuh2.TabPages;
 using System.ComponentModel;
 
 namespace ArxBuh2.TabPages
 {
     public class TabAccounting : DynamicLayout
     {
-        SelectableFilterCollection<InOut> _collection;
+        private SelectableFilterCollection<InOut> _collection;
         private GridView _grid;
         public GridView Grid
         {
@@ -39,14 +34,15 @@ namespace ArxBuh2.TabPages
             {
                 var layout = new DynamicLayout();
                 
-                layout.Add(panelButton(), yscale: false);
+                layout.Add(PanelButton(), yscale: false);
                 layout.Add(Grid, yscale: true);
-                layout.Add(panelCalc(), yscale: false);
+                layout.Add(PanelCalc(), yscale: false);
 
                 return layout;
             }
         }
-        class MyCustomCell : CustomCell
+
+        private class MyCustomCell : CustomCell
         {
             protected override void OnConfigureCell(CellEventArgs args, Control control)
             {
@@ -65,7 +61,7 @@ namespace ArxBuh2.TabPages
             }
         }
 
-        class MyCustomCellComment : MyCustomCell
+        private class MyCustomCellComment : MyCustomCell
         {
             protected override Control OnCreateCell(CellEventArgs args)
             {
@@ -83,7 +79,7 @@ namespace ArxBuh2.TabPages
             }
         }
 
-        class MyCustomCellType : MyCustomCell
+        private class MyCustomCellType : MyCustomCell
         {
             protected override Control OnCreateCell(CellEventArgs args)
             {
@@ -100,7 +96,7 @@ namespace ArxBuh2.TabPages
             }
         }
 
-        class MyCustomCellCategory : MyCustomCell
+        private class MyCustomCellCategory : MyCustomCell
         {
             protected override Control OnCreateCell(CellEventArgs args)
             {
@@ -118,7 +114,7 @@ namespace ArxBuh2.TabPages
             }
         }
 
-        class MyCustomCellCreatedAt : MyCustomCell
+        private class MyCustomCellCreatedAt : MyCustomCell
         {
             protected override Control OnCreateCell(CellEventArgs args)
             {
@@ -131,17 +127,19 @@ namespace ArxBuh2.TabPages
             protected override void OnPaint(CellPaintEventArgs args)
             {
                 var item = (InOut)args.Item;
-                if (!args.IsEditing)
+                if (args.IsEditing) return;
+
+                if (item.CreatedAt != null)
                     args.Graphics.DrawText(SystemFonts.Default(), Colors.Black, args.ClipRectangle.Location, item.CreatedAt.Value.ToShortDateString());
             }
         }
 
-        class MyCustomCellSum : MyCustomCell
+        private class MyCustomCellSum : MyCustomCell
         {
             protected override Control OnCreateCell(CellEventArgs args)
             {
                 var controlLabel = new Label();
-                controlLabel.TextBinding.BindDataContext((InOut m) => (m.Sum.ToString()));
+                controlLabel.TextBinding.BindDataContext((InOut m) => m.Sum.ToString());
 
                 return controlLabel;
             }
@@ -154,18 +152,20 @@ namespace ArxBuh2.TabPages
             }
         }
 
-        GridView CreateGrid()
+        private GridView CreateGrid()
         {
 
-            var grid = new GridView();
-            grid.ID = "mainGrid";
-            grid.GridLines = GridLines.Both;
+            var grid = new GridView
+            {
+                ID = "mainGrid",
+                GridLines = GridLines.Both
+            };
 
-            Cell cellType = null;
-            Cell cellCategory = null;
-            Cell cellCreatedAt = null;
-            Cell cellSum = null;
-            Cell cellComment = null;        
+            Cell cellType;
+            Cell cellCategory;
+            Cell cellCreatedAt;
+            Cell cellSum;
+            Cell cellComment;
 
             if (Platform.Supports<CustomCell>())
             {
@@ -181,12 +181,12 @@ namespace ArxBuh2.TabPages
 
                 cellCategory = new TextBoxCell { Binding = Binding.Property<InOut, string>(r => r.Category) };
 
-                cellCreatedAt = new TextBoxCell()
+                cellCreatedAt = new TextBoxCell
                 {
                     Binding = Binding.Property((InOut m) => m.CreatedAt).Convert(r => ((DateTime)r).ToString("dd.MM.yyyy"), v => (DateTime)Enum.Parse(typeof(InOut), v))
                 };
 
-                cellSum = new TextBoxCell()
+                cellSum = new TextBoxCell
                 {
                     Binding = Binding.Property((InOut m) => m.Sum).Convert(r => r.ToString(), v => (int)Enum.Parse(typeof(InOut), v))
                 };
@@ -274,24 +274,24 @@ namespace ArxBuh2.TabPages
                 switch (e.Column.HeaderText)
                 {
                     case "Type":
-                        ascending = (x, y) => (string.Compare(x.TypeOperation, y.TypeOperation, StringComparison.Ordinal));
-                        descending = (x, y) => (string.Compare(y.TypeOperation, x.TypeOperation, StringComparison.Ordinal));
+                        ascending = (x, y) => string.Compare(x.TypeOperation, y.TypeOperation, StringComparison.Ordinal);
+                        descending = (x, y) => string.Compare(y.TypeOperation, x.TypeOperation, StringComparison.Ordinal);
                         break;
                     case "Category":
-                        ascending = (x, y) => (string.Compare(x.Category, y.Category, StringComparison.Ordinal));
-                        descending = (x, y) => (string.Compare(y.Category, x.Category, StringComparison.Ordinal));
+                        ascending = (x, y) => string.Compare(x.Category, y.Category, StringComparison.Ordinal);
+                        descending = (x, y) => string.Compare(y.Category, x.Category, StringComparison.Ordinal);
                         break;
                     case "CreatedAt":
-                        ascending = (x, y) => (x.CreatedAt.Value.CompareTo(y.CreatedAt.Value));
-                        descending = (x, y) => (y.CreatedAt.Value.CompareTo(x.CreatedAt.Value));
+                        ascending = (x, y) => x.CreatedAt.Value.CompareTo(y.CreatedAt.Value);
+                        descending = (x, y) => y.CreatedAt.Value.CompareTo(x.CreatedAt.Value);
                         break;
                     case "Sum":
-                        ascending = (x, y) => (x.Sum.CompareTo(y.Sum));
-                        descending = (x, y) => (y.Sum.CompareTo(x.Sum));
+                        ascending = (x, y) => x.Sum.CompareTo(y.Sum);
+                        descending = (x, y) => y.Sum.CompareTo(x.Sum);
                         break;
                     case "Comment":
-                        ascending = (x, y) => (string.Compare(x.Comment, y.Comment, StringComparison.Ordinal));
-                        descending = (x, y) => (string.Compare(y.Comment, x.Comment, StringComparison.Ordinal));
+                        ascending = (x, y) => string.Compare(x.Comment, y.Comment, StringComparison.Ordinal);
+                        descending = (x, y) => string.Compare(y.Comment, x.Comment, StringComparison.Ordinal);
                         break;
                 }
 
@@ -307,30 +307,31 @@ namespace ArxBuh2.TabPages
             return grid;
         }
 
-        ContextMenu gridContextMenu;
-        ContextMenu CreateGridContextMenu()
+        private ContextMenu _gridContextMenu;
+
+        private ContextMenu CreateGridContextMenu()
         {
-            if (gridContextMenu != null)
-                return gridContextMenu;
+            if (_gridContextMenu != null)
+                return _gridContextMenu;
 
-            gridContextMenu = new ContextMenu();
+            _gridContextMenu = new ContextMenu();
 
-            gridContextMenu.Items.Add(new ButtonMenuItem { Text = "Редактировать" });
-            gridContextMenu.Items.Add(new ButtonMenuItem { Text = "Удалить" });
+            _gridContextMenu.Items.Add(new ButtonMenuItem { Text = "Редактировать" });
+            _gridContextMenu.Items.Add(new ButtonMenuItem { Text = "Удалить" });
 
-            return gridContextMenu;
+            return _gridContextMenu;
         }
 
 
-        Panel panelButton()
+        private Panel PanelButton()
         {
             var pickerDown = new DateTimePicker { Width = 110, Enabled = true, Value = DateTime.Now.AddYears(-1) };
             var pickerUp = new DateTimePicker { Width = 110, Enabled = true, Value = DateTime.Now.AddYears(1) };
             var filterComboBox = new ComboBox { Items = { "Доход", "Расход" } };
 
-            pickerDown.ValueChanged += ((sender, e) => filter(sender, e, (System.DateTime)pickerDown.Value, (System.DateTime)pickerUp.Value, filterComboBox.Text));
-            pickerUp.ValueChanged += ((sender, e) => filter(sender, e, (System.DateTime)pickerDown.Value, (System.DateTime)pickerUp.Value, filterComboBox.Text));
-            filterComboBox.TextChanged += ((sender, e) => filter(sender, e, (System.DateTime)pickerDown.Value, (System.DateTime)pickerUp.Value, filterComboBox.Text));
+            pickerDown.ValueChanged += (sender, e) => Filter(sender, e, (DateTime)pickerDown.Value, (DateTime)pickerUp.Value, filterComboBox.Text);
+            pickerUp.ValueChanged += (sender, e) => Filter(sender, e, (DateTime)pickerDown.Value, (DateTime)pickerUp.Value, filterComboBox.Text);
+            filterComboBox.TextChanged += (sender, e) => Filter(sender, e, (DateTime)pickerDown.Value, (DateTime)pickerUp.Value, filterComboBox.Text);
 
             var buttonClearFilter = new Button { Text = "Отчистить фильтр" };
             buttonClearFilter.Click += (sender, e) =>
@@ -352,8 +353,8 @@ namespace ArxBuh2.TabPages
 
                 Items =
                 {
-                    new Button { Text = "Доход", Command = addEdit("Доход") },
-                            new Button { Text = "Расход", Command = addEdit("Расход") },
+                    new Button { Text = "Доход", Command = AddEdit("Доход") },
+                            new Button { Text = "Расход", Command = AddEdit("Расход") },
                             filterComboBox,
                             new Label { Text = "С" },
                             pickerDown,
@@ -361,8 +362,8 @@ namespace ArxBuh2.TabPages
                             pickerUp,
                             buttonClearFilter,
                             null,
-                            settingsButton(),
-                            exitButton()
+                            SettingsButton(),
+                            ExitButton()
                 }
             };
 
@@ -374,17 +375,17 @@ namespace ArxBuh2.TabPages
             return panel;
         }
 
-        private Command addEdit(string title)
+        private Command AddEdit(string title)
         {
-            Command add = new Command();
+            var add = new Command();
 
             add.Executed += (sender, e) =>
             {
-                _Forms.AddEditInOut panel = new _Forms.AddEditInOut(title);
-                
+                var panel = new _Forms.AddEditInOut(title);
+
                 if (panel.ShowModal())
                 {
-                    Database.Create<InOut>(panel.NewItem);
+                    Database.Create(panel.NewItem);
                     _collection.Add(panel.NewItem);
                 }
             };
@@ -392,7 +393,7 @@ namespace ArxBuh2.TabPages
             return add;
         }
 
-        private void filter(object sender, EventArgs e, DateTime down, DateTime up, string substring)
+        private void Filter(object sender, EventArgs e, DateTime down, DateTime up, string substring)
         {
             _collection.Filter = x => ((x.CreatedAt.Value.CompareTo(new DateTime(down.Year, down.Month, down.Day, 0, 0, 0)) >= 0)
                                         && (x.CreatedAt.Value.CompareTo((new DateTime(up.Year, up.Month, up.Day + 1)).AddMilliseconds(-1)) <= 0)
@@ -403,7 +404,7 @@ namespace ArxBuh2.TabPages
 
         }
 
-        Control settingsButton()
+        private Control SettingsButton()
         {
             var icon = new Bitmap(Bitmap.FromResource("ArxBuh2.Resources.gear_wheel_32x32.png"), 16, 16, ImageInterpolation.Default);
 
@@ -421,7 +422,7 @@ namespace ArxBuh2.TabPages
             return button;
         }
 
-        Control exitButton()
+        private Control ExitButton()
         {
             var icon = new Bitmap(Bitmap.FromResource("ArxBuh2.Resources.door_32x32.png"), 16, 16, ImageInterpolation.Default);
 
@@ -440,36 +441,38 @@ namespace ArxBuh2.TabPages
             return button;
         }
 
-        ContextMenu settingsMenu;
-        ContextMenu CreateSettingsMenu()
+        private ContextMenu _settingsMenu;
+
+        private ContextMenu CreateSettingsMenu()
         {
-            if (settingsMenu != null)
-                return settingsMenu;
+            if (_settingsMenu != null)
+                return _settingsMenu;
 
-            settingsMenu = new ContextMenu();
+            _settingsMenu = new ContextMenu();
 
-            settingsMenu.Items.Add(new ButtonMenuItem { Text = "О программе" });
-            settingsMenu.Items.AddSeparator();
+            _settingsMenu.Items.Add(new ButtonMenuItem { Text = "О программе" });
+            _settingsMenu.Items.AddSeparator();
 
-            settingsMenu.Items.Add(new ButtonMenuItem { Text = "Категории доходов и расходов" });
-            settingsMenu.Items.AddSeparator();
+            _settingsMenu.Items.Add(new ButtonMenuItem { Text = "Категории доходов и расходов" });
+            _settingsMenu.Items.AddSeparator();
 
-            settingsMenu.Items.Add(new ButtonMenuItem { Text = "Выгрузить в CSV" });
+            _settingsMenu.Items.Add(new ButtonMenuItem { Text = "Выгрузить в CSV" });
 
-            settingsMenu.Items.AddSeparator();
-            var subMenuSettings = settingsMenu.Items.GetSubmenu("Настройки");
+            _settingsMenu.Items.AddSeparator();
+            var subMenuSettings = _settingsMenu.Items.GetSubmenu("Настройки");
             subMenuSettings.Items.Add(new ButtonMenuItem { Text = "Резервное копирование" });
             subMenuSettings.Items.Add(new ButtonMenuItem { Text = "Шифрование" });
             subMenuSettings.Items.Add(new ButtonMenuItem { Text = "Автоматическое обновление" });
 
 
 
-            return settingsMenu;
+            return _settingsMenu;
         }
 
 
-        ResultModel _resultModel;
-        Panel panelCalc()
+        private ResultModel _resultModel;
+
+        private Panel PanelCalc()
         {
             var label = new Label();
             label.TextBinding.BindDataContext((ResultModel m) => m.Calc);
@@ -496,7 +499,7 @@ namespace ArxBuh2.TabPages
         }
         public class ResultModel : INotifyPropertyChanged
         {
-            string _result;
+            private string _result;
             public string Calc
             {
                 get { return _result; }
@@ -510,7 +513,7 @@ namespace ArxBuh2.TabPages
                 }
             }
 
-            void OnPropertyChanged([CallerMemberName] string memberName = null)
+            private void OnPropertyChanged([CallerMemberName] string memberName = null)
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(memberName));
             }

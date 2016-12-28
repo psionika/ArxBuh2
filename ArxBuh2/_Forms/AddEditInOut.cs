@@ -1,10 +1,7 @@
 ﻿using System;
+
 using Eto.Drawing;
 using Eto.Forms;
-using System.ComponentModel;
-using System.Collections.ObjectModel;
-
-using System.Collections.Generic;
 
 using ArxBuh2.Data.Entity;
 using ArxBuh2._Controls;
@@ -14,24 +11,14 @@ namespace ArxBuh2._Forms
 
     public class AddEditInOut : Dialog<bool>
     {
-        InOut newItem;
-
-        public InOut NewItem
-        {
-            get { return newItem; }
-            set
-            {
-                newItem = value;
-            }
-        }
+        public InOut NewItem { get; set; }
 
         public AddEditInOut(string title)
         {
             Title = title;
 
             NewItem = new InOut();
-            this.DataContext = NewItem;
-
+            DataContext = NewItem;
 
             var comboType = new ComboBox { ReadOnly = true };
             var comboCategory = new CategoryComboBox();
@@ -49,12 +36,10 @@ namespace ArxBuh2._Forms
 
             comboType.Text = title;
 
-            var dateTimePickerCreatedAt = new DateTimePicker(); dateTimePickerCreatedAt.Value = DateTime.Now;
-
+            var dateTimePickerCreatedAt = new DateTimePicker {Value = DateTime.Now};
             var textBoxSum = new TextBox();
 
-            var textBoxComment = new TextBox();
-            textBoxComment.Size = new Size(300, 200);
+            var textBoxComment = new TextBox {Size = new Size(300, 200)};
             textBoxComment.TextBinding.BindDataContext((InOut m) => m.Comment);
 
             var layout = new TableLayout
